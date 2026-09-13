@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ULB Admin - Waste Segregation</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header class="topbar"><nav id="navbar"></nav></header>
+
+<main class="app-main">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <h1 id="admin-title">ULB Admin dashboard</h1>
+        <p class="muted">Raipur, Chhattisgarh - ward-wise segregation &amp; compliance</p>
+      </div>
+      <div class="chip-row">
+        <span class="chip" id="admin-date-chip">-</span>
+      </div>
+    </div>
+
+    <div class="tabbar">
+      <button data-tab="dashboard" class="active">Dashboard</button>
+      <button data-tab="wards">Wards</button>
+      <button data-tab="households">Households</button>
+      <button data-tab="collectors">Collectors</button>
+      <button data-tab="collections">Collections</button>
+      <button data-tab="rewards">Rewards</button>
+      <button data-tab="analytics">Analytics</button>
+    </div>
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="tab-panel active" id="tab-dashboard">
+      <div class="grid grid-4 mb-2">
+        <div class="card">
+          <div class="stat-label">Total households</div>
+          <div class="stat-value" id="m-total-hh">-</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Active households (30d)</div>
+          <div class="stat-value" id="m-active-hh">-</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Today's collections</div>
+          <div class="stat-value" id="m-today-coll">-</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Total collectors</div>
+          <div class="stat-value" id="m-total-col">-</div>
+        </div>
+      </div>
+      <div class="grid grid-2 mb-2">
+        <div class="card">
+          <div class="stat-label">Segregation rate (30d)</div>
+          <div class="stat-value" id="m-seg-rate">-</div>
+          <div class="stat-sub">Good collections / total collections x 100</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Total Green Credits issued</div>
+          <div class="stat-value" id="m-credits-issued">-</div>
+          <div class="stat-sub">All-time, EARNED transactions only</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Rating distribution - last 30 days</div>
+        <div id="m-rating-breakdown" class="mt-2">Loading...</div>
+      </div>
+    </section>
+
+    <!-- ============ WARDS ============ -->
+    <section class="tab-panel" id="tab-wards">
+      <div class="card mb-2">
+        <div class="card-title">Ward-wise compliance heatmap (30d)</div>
+        <p class="small muted mt-0">Darker green = higher share of "Good" ratings.</p>
+        <div class="grid grid-4" id="ward-heatmap">Loading...</div>
+      </div>
+      <div class="card">
+        <div class="flex-between">
+          <div class="card-title">Ward-wise performance</div>
+        </div>
+        <div class="table-wrap mt-1">
+          <table>
+            <thead><tr><th>Ward</th><th>Households</th><th>Collections (30d)</th><th>Good %</th><th>Average %</th><th>Poor %</th></tr></thead>
+            <tbody id="wards-table-body"><tr><td colspan="6">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HOUSEHOLDS ============ -->
+    <section class="tab-panel" id="tab-households">
+      <div class="card">
+        <div class="flex-between">
+          <div class="card-title">All households</div>
+          <div class="flex flex-gap">
+            <select id="hh-ward-filter" style="padding:8px 10px; border:1.5px solid var(--ink-100); border-radius:8px;">
+              <option value="">All wards</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openAddHouseholdModal()">+ Add household</button>
+          </div>
+        </div>
+        <div class="table-wrap mt-1">
+          <table>
+            <thead><tr><th>Household ID</th><th>Address</th><th>Ward</th><th>Credit balance</th><th>Registered</th></tr></thead>
+            <tbody id="households-table-body"><tr><td colspan="5">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ COLLECTORS ============ -->
+    <section class="tab-panel" id="tab-collectors">
+      <div class="card">
+        <div class="flex-between">
+          <div class="card-title">All collectors</div>
+          <button class="btn btn-primary btn-sm" onclick="openAddCollectorModal()">+ Add collector</button>
+        </div>
+        <div class="table-wrap mt-1">
+          <table>
+            <thead><tr><th>Collector ID</th><th>Name</th><th>Phone</th><th>Assigned ward</th></tr></thead>
+            <tbody id="collectors-table-body"><tr><td colspan="4">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ COLLECTIONS ============ -->
+    <section class="tab-panel" id="tab-collections">
+      <div class="card">
+        <div class="flex-between">
+          <div class="card-title">Recent collections (all wards)</div>
+          <button class="btn btn-outline btn-sm" onclick="loadCollections()">Refresh</button>
+        </div>
+        <div class="table-wrap mt-1">
+          <table>
+            <thead><tr><th>Date</th><th>Household</th><th>Ward</th><th>Rating</th><th>Credits</th><th>Collector</th></tr></thead>
+            <tbody id="collections-table-body"><tr><td colspan="6">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ REWARDS ============ -->
+    <section class="tab-panel" id="tab-rewards">
+      <div class="card mb-2">
+        <div class="flex-between">
+          <div class="card-title">Rewards catalogue</div>
+          <button class="btn btn-primary btn-sm" onclick="openAddRewardModal()">+ Add reward</button>
+        </div>
+        <div class="table-wrap mt-1">
+          <table>
+            <thead><tr><th>Name</th><th>Description</th><th>Credits required</th><th>Available</th><th></th></tr></thead>
+            <tbody id="rewards-table-body"><tr><td colspan="5">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Redemption history</div>
+        <div class="table-wrap mt-1">
+          <table>
+            <thead><tr><th>Date</th><th>Household</th><th>Reward</th><th>Credits used</th><th>Status</th></tr></thead>
+            <tbody id="redemptions-table-body"><tr><td colspan="5">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ANALYTICS ============ -->
+    <section class="tab-panel" id="tab-analytics">
+      <div class="card mb-2">
+        <div class="card-title">Green Credit rules</div>
+        <p class="small muted mt-0">Change how many credits each rating earns - takes effect on the next submitted collection.</p>
+        <div class="flex flex-gap" style="flex-wrap:wrap;">
+          <div class="field" style="margin-bottom:0;">
+            <label>Good</label>
+            <input type="number" id="rule-good" min="0" style="width:100px;" />
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Average</label>
+            <input type="number" id="rule-average" min="0" style="width:100px;" />
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Poor</label>
+            <input type="number" id="rule-poor" min="0" style="width:100px;" />
+          </div>
+          <button class="btn btn-secondary" style="align-self:flex-end;" onclick="saveCreditRules()">Save rules</button>
+        </div>
+      </div>
+
+      <div class="card mb-2">
+        <div class="card-title">Daily segregation trend (last 14 days)</div>
+        <div id="daily-trend-chart" class="mt-2">Loading...</div>
+      </div>
+
+      <div class="card mb-2">
+        <div class="card-title">Weekly trend (last 8 weeks)</div>
+        <div class="table-wrap mt-1">
+          <table>
+            <thead><tr><th>Week</th><th>Total collections</th><th>Segregation rate</th></tr></thead>
+            <tbody id="weekly-trend-body"><tr><td colspan="3">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-title">Top-performing households</div>
+          <div class="table-wrap mt-1">
+            <table>
+              <thead><tr><th>Household</th><th>Ward</th><th>Credits earned</th></tr></thead>
+              <tbody id="top-households-body"><tr><td colspan="3">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Top-performing wards (30d, min. 5 collections)</div>
+          <div class="table-wrap mt-1">
+            <table>
+              <thead><tr><th>Ward</th><th>Collections</th><th>Segregation rate</th></tr></thead>
+              <tbody id="top-wards-body"><tr><td colspan="3">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- ============ ADD HOUSEHOLD MODAL ============ -->
+<div class="modal-backdrop" id="add-household-modal">
+  <div class="modal">
+    <h3 class="mt-0">Add household</h3>
+    <div class="field">
+      <label>Name</label>
+      <input type="text" id="nh-name" placeholder="e.g. Ramesh Chandrakar" />
+    </div>
+    <div class="field">
+      <label>Contact (phone or email)</label>
+      <input type="text" id="nh-contact" placeholder="e.g. 9876543210" />
+    </div>
+    <div class="field">
+      <label>Address</label>
+      <input type="text" id="nh-address" placeholder="e.g. House No. 12, GE Road" />
+    </div>
+    <div class="field">
+      <label>Ward</label>
+      <select id="nh-ward"></select>
+    </div>
+    <p class="field-hint">A default password (<code>house123</code>) is set automatically - the household can log in immediately.</p>
+    <div class="flex flex-gap mt-2">
+      <button class="btn btn-outline btn-block" onclick="closeModal('add-household-modal')">Cancel</button>
+      <button class="btn btn-primary btn-block" id="nh-submit-btn" onclick="submitAddHousehold()">Add household</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ADD COLLECTOR MODAL ============ -->
+<div class="modal-backdrop" id="add-collector-modal">
+  <div class="modal">
+    <h3 class="mt-0">Add collector</h3>
+    <div class="field">
+      <label>Name</label>
+      <input type="text" id="nc-name" placeholder="e.g. Suresh Nayak" />
+    </div>
+    <div class="field">
+      <label>Phone</label>
+      <input type="text" id="nc-phone" placeholder="e.g. 9876500099" />
+    </div>
+    <div class="field">
+      <label>Assigned ward</label>
+      <select id="nc-ward"></select>
+    </div>
+    <p class="field-hint">A default password (<code>collect123</code>) is set automatically.</p>
+    <div class="flex flex-gap mt-2">
+      <button class="btn btn-outline btn-block" onclick="closeModal('add-collector-modal')">Cancel</button>
+      <button class="btn btn-primary btn-block" id="nc-submit-btn" onclick="submitAddCollector()">Add collector</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ADD/EDIT REWARD MODAL ============ -->
+<div class="modal-backdrop" id="reward-modal">
+  <div class="modal">
+    <h3 class="mt-0" id="reward-modal-title">Add reward</h3>
+    <input type="hidden" id="rw-id" />
+    <div class="field">
+      <label>Name</label>
+      <input type="text" id="rw-name" placeholder="e.g. Rs.50 Electricity Bill Credit" />
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <input type="text" id="rw-description" placeholder="Short description" />
+    </div>
+    <div class="field">
+      <label>Credits required</label>
+      <input type="number" id="rw-credits" min="1" style="width:140px;" />
+    </div>
+    <div class="field" style="display:flex; align-items:center; gap:8px;">
+      <input type="checkbox" id="rw-available" style="width:auto;" />
+      <label style="margin:0;" for="rw-available">Available to households</label>
+    </div>
+    <div class="flex flex-gap mt-2">
+      <button class="btn btn-outline btn-block" onclick="closeModal('reward-modal')">Cancel</button>
+      <button class="btn btn-primary btn-block" id="rw-submit-btn" onclick="submitReward()">Save reward</button>
+    </div>
+  </div>
+</div><script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script>
+if (!WasteSegAuth.guard(["ADMIN"])) { throw new Error("redirect"); }
+renderNavbar();
+initTabs("dashboard");
+
+document.getElementById("admin-title").textContent = `Welcome, ${WasteSegAuth.user().name || "Admin"}`;
+document.getElementById("admin-date-chip").textContent = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short", year: "numeric" });
+
+let wardsCache = [];
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove("open");
+}
+
+// ---------------- DASHBOARD ----------------
+async function loadDashboardMetrics() {
+  const m = await WasteSegAPI.get("/api/admin/dashboard");
+  document.getElementById("m-total-hh").textContent = m.total_households;
+  document.getElementById("m-active-hh").textContent = m.active_households_30d;
+  document.getElementById("m-today-coll").textContent = m.todays_collections;
+  document.getElementById("m-total-col").textContent = m.total_collectors;
+  document.getElementById("m-seg-rate").textContent = m.segregation_rate_30d + "%";
+  document.getElementById("m-credits-issued").textContent = m.total_green_credits_issued;
+
+  const b = m.rating_distribution_30d;
+  const total = Math.max(1, b.GOOD + b.AVERAGE + b.POOR);
+  document.getElementById("m-rating-breakdown").innerHTML = `
+    ${breakdownBar("Good", b.GOOD, total, "var(--green-600)")}
+    ${breakdownBar("Average", b.AVERAGE, total, "var(--amber-500)")}
+    ${breakdownBar("Poor", b.POOR, total, "var(--red-500)")}
+  `;
+}
+
+function breakdownBar(label, value, total, color) {
+  const pct = Math.round((value / total) * 100);
+  return `
+    <div class="mt-1">
+      <div class="flex-between small"><span>${label}</span><span class="muted">${value} (${pct}%)</span></div>
+      <div class="progress-bar"><div style="width:${pct}%; background:${color};"></div></div>
+    </div>`;
+}
+
+// ---------------- WARDS ----------------
+function heatColor(pct) {
+  if (pct >= 80) return "var(--green-800)";
+  if (pct >= 60) return "var(--green-600)";
+  if (pct >= 40) return "var(--green-500)";
+  if (pct >= 20) return "var(--amber-500)";
+  return "var(--red-500)";
+}
+
+async function loadWards() {
+  const res = await WasteSegAPI.get("/api/admin/wards");
+  const heatmap = document.getElementById("ward-heatmap");
+  heatmap.innerHTML = res.wards.map(w => `
+    <div class="heat-cell" style="background:${heatColor(w.good_pct)};">
+      <div>${w.ward_name}</div>
+      <div style="font-size:1.3rem; margin-top:6px;">${w.good_pct}%</div>
+      <div style="font-weight:500; opacity:.9;">Good rate</div>
+    </div>`).join("") || `<div class="empty-state">No ward data yet.</div>`;
+
+  const body = document.getElementById("wards-table-body");
+  body.innerHTML = res.wards.map(w => `
+    <tr>
+      <td><strong>${w.ward_name}</strong><br><span class="small muted">${w.city}</span></td>
+      <td>${w.households}</td>
+      <td>${w.collections_30d}</td>
+      <td>${w.good_pct}%</td>
+      <td>${w.average_pct}%</td>
+      <td>${w.poor_pct}%</td>
+    </tr>`).join("") || `<tr><td colspan="6" class="empty-state">No wards found.</td></tr>`;
+}
+
+async function loadWardOptions() {
+  const res = await WasteSegAPI.get("/api/wards");
+  wardsCache = res.wards;
+  const opts = res.wards.map(w => `<option value="${w.id}">${w.ward_name}</option>`).join("");
+  document.getElementById("nh-ward").innerHTML = opts;
+  document.getElementById("nc-ward").innerHTML = opts;
+  const filter = document.getElementById("hh-ward-filter");
+  filter.innerHTML = `<option value="">All wards</option>` + opts;
+}
+
+// ---------------- HOUSEHOLDS ----------------
+async function loadHouseholds() {
+  const wardId = document.getElementById("hh-ward-filter").value;
+  const qs = wardId ? `?ward_id=${wardId}` : "";
+  const res = await WasteSegAPI.get(`/api/admin/households${qs}`);
+  const body = document.getElementById("households-table-body");
+  if (!res.households.length) {
+    body.innerHTML = `<tr><td colspan="5" class="empty-state">No households found.</td></tr>`;
+    return;
+  }
+  body.innerHTML = res.households.map(h => `
+    <tr>
+      <td><strong>${h.household_code}</strong></td>
+      <td>${h.address || "-"}</td>
+      <td>${h.ward || "-"}</td>
+      <td>${h.credit_balance}</td>
+      <td>${fmtDateTime(h.created_at)}</td>
+    </tr>`).join("");
+}
+document.getElementById("hh-ward-filter").addEventListener("change", loadHouseholds);
+
+function openAddHouseholdModal() {
+  document.getElementById("nh-name").value = "";
+  document.getElementById("nh-contact").value = "";
+  document.getElementById("nh-address").value = "";
+  document.getElementById("add-household-modal").classList.add("open");
+}
+async function submitAddHousehold() {
+  const name = document.getElementById("nh-name").value.trim();
+  const contact = document.getElementById("nh-contact").value.trim();
+  const address = document.getElementById("nh-address").value.trim();
+  const ward_id = document.getElementById("nh-ward").value;
+  if (!name || !contact || !ward_id) { toast("Name, contact and ward are required.", "error"); return; }
+  const btn = document.getElementById("nh-submit-btn");
+  btn.disabled = true;
+  try {
+    const res = await WasteSegAPI.post("/api/admin/households", { name, contact, address, ward_id });
+    toast(`Household ${res.household_code} added. Default password: ${res.default_password}`, "success");
+    closeModal("add-household-modal");
+    await Promise.all([loadHouseholds(), loadWards(), loadDashboardMetrics()]);
+  } catch (err) {
+    toast(err.message, "error");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ---------------- COLLECTORS ----------------
+async function loadCollectors() {
+  const res = await WasteSegAPI.get("/api/admin/collectors");
+  const body = document.getElementById("collectors-table-body");
+  if (!res.collectors.length) {
+    body.innerHTML = `<tr><td colspan="4" class="empty-state">No collectors found.</td></tr>`;
+    return;
+  }
+  body.innerHTML = res.collectors.map(c => `
+    <tr>
+      <td><strong>${c.collector_code}</strong></td>
+      <td>${c.name}</td>
+      <td>${c.phone || "-"}</td>
+      <td>${c.ward_name || "Unassigned"}</td>
+    </tr>`).join("");
+}
+
+function openAddCollectorModal() {
+  document.getElementById("nc-name").value = "";
+  document.getElementById("nc-phone").value = "";
+  document.getElementById("add-collector-modal").classList.add("open");
+}
+async function submitAddCollector() {
+  const name = document.getElementById("nc-name").value.trim();
+  const phone = document.getElementById("nc-phone").value.trim();
+  const ward_id = document.getElementById("nc-ward").value;
+  if (!name || !phone || !ward_id) { toast("Name, phone and ward are required.", "error"); return; }
+  const btn = document.getElementById("nc-submit-btn");
+  btn.disabled = true;
+  try {
+    const res = await WasteSegAPI.post("/api/admin/collectors", { name, phone, ward_id });
+    toast(`Collector ${res.collector_code} added. Default password: ${res.default_password}`, "success");
+    closeModal("add-collector-modal");
+    await loadCollectors();
+  } catch (err) {
+    toast(err.message, "error");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ---------------- COLLECTIONS ----------------
+async function loadCollections() {
+  const res = await WasteSegAPI.get("/api/admin/collections?limit=100");
+  const body = document.getElementById("collections-table-body");
+  if (!res.collections.length) {
+    body.innerHTML = `<tr><td colspan="6" class="empty-state">No collections recorded yet.</td></tr>`;
+    return;
+  }
+  body.innerHTML = res.collections.map(c => `
+    <tr>
+      <td>${fmtDate(c.collection_date)}</td>
+      <td><strong>${c.household_code}</strong></td>
+      <td>${c.ward_name || "-"}</td>
+      <td>${ratingBadge(c.rating)}</td>
+      <td>${c.credits_awarded >= 0 ? "+" : ""}${c.credits_awarded}</td>
+      <td>${c.collector_name} (${c.collector_code})</td>
+    </tr>`).join("");
+}
+
+// ---------------- REWARDS ----------------
+async function loadRewards() {
+  const [rewardsRes, redemptionsRes] = await Promise.all([
+    WasteSegAPI.get("/api/admin/rewards"),
+    WasteSegAPI.get("/api/admin/redemptions"),
+  ]);
+  const body = document.getElementById("rewards-table-body");
+  body.innerHTML = rewardsRes.rewards.map(r => `
+    <tr>
+      <td><strong>${r.name}</strong></td>
+      <td class="small">${r.description || ""}</td>
+      <td>${r.credits_required}</td>
+      <td><span class="badge ${r.available ? 'badge-good' : 'badge-neutral'}">${r.available ? "Available" : "Hidden"}</span></td>
+      <td><button class="btn btn-outline btn-sm" onclick='openEditRewardModal(${JSON.stringify(r).replace(/'/g, "&#39;")})'>Edit</button></td>
+    </tr>`).join("") || `<tr><td colspan="5" class="empty-state">No rewards yet.</td></tr>`;
+
+  const rbody = document.getElementById("redemptions-table-body");
+  rbody.innerHTML = redemptionsRes.redemptions.map(r => `
+    <tr>
+      <td>${fmtDateTime(r.redemption_date)}</td>
+      <td>${r.household_code}</td>
+      <td>${r.reward_name}</td>
+      <td>-${r.credits_used}</td>
+      <td><span class="badge badge-good">${r.status}</span></td>
+    </tr>`).join("") || `<tr><td colspan="5" class="empty-state">No redemptions yet.</td></tr>`;
+}
+
+function openAddRewardModal() {
+  document.getElementById("reward-modal-title").textContent = "Add reward";
+  document.getElementById("rw-id").value = "";
+  document.getElementById("rw-name").value = "";
+  document.getElementById("rw-description").value = "";
+  document.getElementById("rw-credits").value = "";
+  document.getElementById("rw-available").checked = true;
+  document.getElementById("reward-modal").classList.add("open");
+}
+function openEditRewardModal(r) {
+  document.getElementById("reward-modal-title").textContent = "Edit reward";
+  document.getElementById("rw-id").value = r.id;
+  document.getElementById("rw-name").value = r.name;
+  document.getElementById("rw-description").value = r.description || "";
+  document.getElementById("rw-credits").value = r.credits_required;
+  document.getElementById("rw-available").checked = !!r.available;
+  document.getElementById("reward-modal").classList.add("open");
+}
+async function submitReward() {
+  const id = document.getElementById("rw-id").value;
+  const name = document.getElementById("rw-name").value.trim();
+  const description = document.getElementById("rw-description").value.trim();
+  const credits_required = parseInt(document.getElementById("rw-credits").value, 10);
+  const available = document.getElementById("rw-available").checked;
+  if (!name || !credits_required) { toast("Name and credits required are mandatory.", "error"); return; }
+  const btn = document.getElementById("rw-submit-btn");
+  btn.disabled = true;
+  try {
+    if (id) {
+      await WasteSegAPI.put(`/api/admin/rewards/${id}`, { name, description, credits_required, available });
+      toast("Reward updated.", "success");
+    } else {
+      await WasteSegAPI.post("/api/admin/rewards", { name, description, credits_required });
+      toast("Reward added.", "success");
+    }
+    closeModal("reward-modal");
+    await loadRewards();
+  } catch (err) {
+    toast(err.message, "error");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ---------------- ANALYTICS ----------------
+async function loadCreditRules() {
+  const res = await WasteSegAPI.get("/api/admin/credit-rules");
+  document.getElementById("rule-good").value = res.rules.GOOD ?? 10;
+  document.getElementById("rule-average").value = res.rules.AVERAGE ?? 5;
+  document.getElementById("rule-poor").value = res.rules.POOR ?? 0;
+}
+async function saveCreditRules() {
+  const payload = {
+    GOOD: parseInt(document.getElementById("rule-good").value, 10) || 0,
+    AVERAGE: parseInt(document.getElementById("rule-average").value, 10) || 0,
+    POOR: parseInt(document.getElementById("rule-poor").value, 10) || 0,
+  };
+  try {
+    await WasteSegAPI.put("/api/admin/credit-rules", payload);
+    toast("Green Credit rules updated.", "success");
+  } catch (err) {
+    toast(err.message, "error");
+  }
+}
+
+async function loadAnalytics() {
+  const res = await WasteSegAPI.get("/api/admin/analytics");
+
+  const maxTotal = Math.max(1, ...res.daily_trend.map(d => d.good + d.average + d.poor));
+  document.getElementById("daily-trend-chart").innerHTML = `
+    <div style="display:flex; align-items:flex-end; gap:6px; height:160px; overflow-x:auto; padding-bottom:4px;">
+      ${res.daily_trend.map(d => {
+        const total = d.good + d.average + d.poor;
+        const scale = 130 / maxTotal;
+        return `
+        <div style="display:flex; flex-direction:column; align-items:center; min-width:34px;">
+          <div style="display:flex; flex-direction:column-reverse; height:130px; width:22px; border-radius:4px; overflow:hidden;">
+            <div style="height:${d.good * scale}px; background:var(--green-600);" title="Good: ${d.good}"></div>
+            <div style="height:${d.average * scale}px; background:var(--amber-500);" title="Average: ${d.average}"></div>
+            <div style="height:${d.poor * scale}px; background:var(--red-500);" title="Poor: ${d.poor}"></div>
+          </div>
+          <div class="small muted mt-1" style="writing-mode:vertical-rl; text-orientation:mixed; height:52px;">${fmtDate(d.date)}</div>
+        </div>`;
+      }).join("") || '<div class="empty-state">No data in the last 14 days.</div>'}
+    </div>
+    <div class="flex flex-gap mt-2 small muted">
+      <span>Good</span><span>Average</span><span>Poor</span>
+    </div>`;
+
+  const wbody = document.getElementById("weekly-trend-body");
+  wbody.innerHTML = res.weekly_trend.map(w => `
+    <tr><td>${w.week}</td><td>${w.total}</td><td>${w.segregation_rate}%</td></tr>
+  `).join("") || `<tr><td colspan="3" class="empty-state">No data yet.</td></tr>`;
+
+  const thBody = document.getElementById("top-households-body");
+  thBody.innerHTML = res.top_households.map(h => `
+    <tr><td><strong>${h.household_code}</strong></td><td>${h.ward_name || "-"}</td><td>${h.credits}</td></tr>
+  `).join("") || `<tr><td colspan="3" class="empty-state">No data yet.</td></tr>`;
+
+  const twBody = document.getElementById("top-wards-body");
+  twBody.innerHTML = res.top_wards.map(w => `
+    <tr><td><strong>${w.ward_name}</strong></td><td>${w.total_collections}</td><td>${w.segregation_rate}%</td></tr>
+  `).join("") || `<tr><td colspan="3" class="empty-state">No wards qualify yet (need >=5 collections).</td></tr>`;
+}
+
+(async () => {
+  try {
+    await loadWardOptions();
+    await Promise.all([
+      loadDashboardMetrics(), loadWards(), loadHouseholds(), loadCollectors(),
+      loadCollections(), loadRewards(), loadCreditRules(), loadAnalytics(),
+    ]);
+  } catch (err) {
+    toast(err.message, "error");
+  }
+})();
+</script>
+</body>
+</html>

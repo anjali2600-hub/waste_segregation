@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Log in - Waste Segregation</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header class="topbar"><nav id="navbar"></nav></header>
+
+<main class="auth-wrap">
+  <div class="auth-card">
+    <div class="card">
+      <div class="auth-logo"><span class="brand-mark" style="width:48px;height:48px;font-size:1.4rem;">S</span></div>
+      <h2 class="auth-title text-center">Welcome back</h2>
+      <p class="auth-sub">Log in to your Waste Segregation account</p>
+
+      <div id="login-alert"></div>
+
+      <form id="login-form">
+        <div class="field">
+          <label for="contact">Phone or email</label>
+          <input type="text" id="contact" placeholder="e.g. demo.household@wastesegregation.in" required />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Enter password" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg" id="login-btn">Log in</button>
+      </form>
+
+      <p class="text-center small mt-2">
+        No household account yet? <a href="/register.html">Register here</a>
+      </p>
+
+      <div class="demo-accounts">
+        <strong>Demo accounts</strong> (click to autofill)
+        <div class="row">
+          <span>Household &nbsp;<code>demo.household@wastesegregation.in</code> / <code>house123</code></span>
+          <button class="btn btn-outline btn-sm" type="button" onclick="fillDemo('demo.household@wastesegregation.in','house123')">Use</button>
+        </div>
+        <div class="row">
+          <span>Collector &nbsp;<code>collector1@wastesegregation.in</code> / <code>collect123</code></span>
+          <button class="btn btn-outline btn-sm" type="button" onclick="fillDemo('collector1@wastesegregation.in','collect123')">Use</button>
+        </div>
+        <div class="row">
+          <span>ULB Admin &nbsp;<code>admin@wastesegregation.in</code> / <code>admin123</code></span>
+          <button class="btn btn-outline btn-sm" type="button" onclick="fillDemo('admin@wastesegregation.in','admin123')">Use</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script>
+renderNavbar();
+
+if (WasteSegAuth.isLoggedIn()) {
+  window.location.href = WasteSegAuth.homeForRole();
+}
+
+function fillDemo(contact, password) {
+  document.getElementById("contact").value = contact;
+  document.getElementById("password").value = password;
+}
+
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const alertBox = document.getElementById("login-alert");
+  const btn = document.getElementById("login-btn");
+  alertBox.innerHTML = "";
+  const contact = document.getElementById("contact").value.trim();
+  const password = document.getElementById("password").value;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spinner"></span> Logging in...';
+  try {
+    const res = await WasteSegAPI.post("/api/auth/login", { contact, password });
+    WasteSegAuth.save(res);
+    window.location.href = WasteSegAuth.homeForRole(res.role);
+  } catch (err) {
+    alertBox.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+    btn.disabled = false;
+    btn.innerHTML = "Log in";
+  }
+});
+</script>
+</body>
+</html>

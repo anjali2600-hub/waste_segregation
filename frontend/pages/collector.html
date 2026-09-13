@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Collector - Waste Segregation</title>
+<link rel="stylesheet" href="/css/style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+
+<header class="topbar"><nav id="navbar"></nav></header>
+
+<main class="app-main">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <h1 id="col-title">Collector dashboard</h1>
+        <p class="muted" id="col-sub">Loading...</p>
+      </div>
+      <div class="chip-row">
+        <span class="chip" id="col-progress-chip">-</span>
+      </div>
+    </div>
+
+    <div class="tabbar">
+      <button data-tab="scan" class="active">Scan QR</button>
+      <button data-tab="today">Today's collection list</button>
+    </div>
+
+    <!-- ============ SCAN ============ -->
+    <section class="tab-panel active" id="tab-scan">
+      <div class="grid grid-2">
+        <div class="card">
+          <h3 class="mt-0">Scan household QR</h3>
+          <p class="small muted">Point the camera at the household's Waste Segregation QR tag.</p>
+          <div id="qr-reader"></div>
+          <div class="flex flex-gap mt-2">
+            <button class="btn btn-secondary btn-block" id="start-scan-btn" onclick="startScanner()">Start camera scan</button>
+            <button class="btn btn-outline btn-block" id="stop-scan-btn" style="display:none;" onclick="stopScanner()">Stop</button>
+          </div>
+
+                    <div class="mt-3">
+            <div class="card-title">Optional: AI photo check</div>
+            <p class="small muted mt-0">Snap or upload a photo of the waste - the AI will suggest Wet or Dry. This is only a hint; you still choose the final rating below.</p>
+            <input type="file" id="ai-photo-input" accept="image/*" capture="environment" style="margin-bottom:8px;" />
+            <button class="btn btn-secondary btn-block btn-sm" onclick="analyzePhoto()">Analyze photo</button>
+            <div id="ai-hint-result" class="mt-1"></div>
+          </div>
+            <div class="flex flex-gap mt-1">
+              <input type="text" id="manual-code" placeholder="e.g. H-10023" style="flex:1; padding:11px 13px; border:1.5px solid var(--ink-100); border-radius:8px; font-size:.95rem;" />
+              <button class="btn btn-primary" onclick="lookupHousehold(document.getElementById('manual-code').value)">Look up</button>
+            </div>
+            <p class="field-hint">Use this if the camera isn't available - the demo always works this way.</p>
+          </div>
+        </div>
+
+        <div id="scan-result-area">
+          <div class="card empty-state">
+            <p>Scan a QR code or enter a household ID to begin rating today's collection.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TODAY LIST ============ -->
+    <section class="tab-panel" id="tab-today">
+      <div class="card">
+        <div class="flex-between">
+          <div class="card-title">Households on your route today</div>
+          <button class="btn btn-outline btn-sm" onclick="loadTodayList()">Refresh</button>
+        </div>
+        <div class="table-wrap mt-1">
+          <table>
+            <thead><tr><th>Household</th><th>Address</th><th>Status</th><th></th></tr></thead>
+            <tbody id="today-table-body"><tr><td colspan="4">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script>
+if (!WasteSegAuth.guard(["COLLECTOR", "ADMIN"])) { throw new Error("redirect"); }
+renderNavbar();
+initTabs("scan");
+
+document.getElementById("col-title").textContent = `Welcome, ${WasteSegAuth.user().name || "Collector"}`;
+document.getElementById("col-sub").textContent = `Collector code: ${WasteSegAuth.collectorCode() || "-"}`;
+
+let html5QrCode = null;
+let currentHousehold = null;
+
+function startScanner() {
+  const readerEl = document.getElementById("qr-reader");
+  readerEl.innerHTML = "";
+  html5QrCode = new Html5Qrcode("qr-reader");
+  document.getElementById("start-scan-btn").style.display = "none";
+  document.getElementById("stop-scan-btn").style.display = "";
+
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 220 },
+    (decodedText) => {
+      lookupHousehold(decodedText);
+      stopScanner();
+    },
+    () => { /* per-frame scan failure, ignore */ }
+  ).catch((err) => {
+    toast("Camera unavailable - use manual entry below instead.", "error");
+    document.getElementById("start-scan-btn").style.display = "";
+    document.getElementById("stop-scan-btn").style.display = "none";
+  });
+}
+
+function stopScanner() {
+  if (html5QrCode) {
+    html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
+  }
+  document.getElementById("start-scan-btn").style.display = "";
+  document.getElementById("stop-scan-btn").style.display = "none";
+}
+
+async function lookupHousehold(rawCode) {
+  const code = (rawCode || "").trim();
+  if (!code) { toast("Enter or scan a household code first.", "error"); return; }
+  const area = document.getElementById("scan-result-area");
+  area.innerHTML = `<div class="card text-center"><span class="loading-spinner"></span> Looking up ${code}...</div>`;
+  try {
+    const hh = await WasteSegAPI.get(`/api/collector/lookup?code=${encodeURIComponent(code)}`);
+    currentHousehold = hh;
+    renderScanResult(hh);
+  } catch (err) {
+    area.innerHTML = `<div class="card alert alert-error" style="margin:0;">${err.message}</div>`;
+  }
+}
+
+function renderScanResult(hh) {
+  const area = document.getElementById("scan-result-area");
+  area.innerHTML = `
+    <div class="card scan-result-card">
+      <div class="flex-between">
+        <h3 class="mt-0 mb-0">${hh.household_code}</h3>
+        ${ratingBadge(hh.today_status)}
+      </div>
+      <p class="small muted mt-1 mb-0">${hh.address || ""}${hh.ward ? " | " + hh.ward : ""}</p>
+      ${hh.already_rated_today ? '<div class="alert alert-info mt-2" style="margin-bottom:0;">Already rated today - submitting again will correct the rating.</div>' : ""}
+      <div class="rating-btn-row">
+        <button class="btn btn-good" onclick="submitRating('GOOD')">Good</button>
+        <button class="btn btn-average" onclick="submitRating('AVERAGE')">Average</button>
+        <button class="btn btn-poor" onclick="submitRating('POOR')">Poor</button>
+      </div>
+    </div>`;
+}
+
+async function submitRating(rating) {
+  if (!currentHousehold) return;
+  const area = document.getElementById("scan-result-area");
+  area.innerHTML = `<div class="card text-center"><span class="loading-spinner"></span> Recording collection...</div>`;
+  try {
+    const res = await WasteSegAPI.post("/api/collections", {
+      household_code: currentHousehold.household_code,
+      rating,
+    });
+    area.innerHTML = `
+      <div class="card text-center" style="border-color:var(--green-400);">
+        <div class="badge badge-good" style="font-size:1rem; padding:8px 18px;">Recorded</div>
+        <h3 class="mt-1">Collection recorded successfully</h3>
+        <p class="mt-0">${res.household_code} | ${ratingBadge(res.rating)}</p>
+        <div class="stat-value mt-1">+${res.credits_awarded} Green Credits</div>
+        <p class="small muted">New balance: ${res.new_balance}</p>
+        <button class="btn btn-secondary btn-block mt-2" onclick="resetScan()">Scan next household</button>
+      </div>`;
+    toast(res.message, "success");
+    currentHousehold = null;
+    loadTodayList();
+  } catch (err) {
+    toast(err.message, "error");
+    area.innerHTML = `<div class="card alert alert-error" style="margin:0;">${err.message}</div>
+      <button class="btn btn-outline btn-block mt-2" onclick="resetScan()">Try again</button>`;
+  }
+}
+
+function resetScan() {
+  currentHousehold = null;
+  document.getElementById("scan-result-area").innerHTML = `
+    <div class="card empty-state"><p>Scan a QR code or enter a household ID to begin rating today's collection.</p></div>`;
+  document.getElementById("manual-code").value = "";
+}
+
+async function analyzePhoto() {
+  const input = document.getElementById("ai-photo-input");
+  const resultBox = document.getElementById("ai-hint-result");
+  if (!input.files || !input.files[0]) {
+    toast("Choose or take a photo first.", "error");
+    return;
+  }
+  resultBox.innerHTML = '<span class="loading-spinner"></span> Analyzing photo...';
+  const formData = new FormData();
+  formData.append("photo", input.files[0]);
+  try {
+    const res = await WasteSegAPI.uploadFile("/api/collector/classify-photo", formData);
+    const label = res.predicted_class === "WET" ? "Wet (Organic)" : "Dry (Recyclable)";
+    const pct = Math.round(res.confidence * 100);
+    resultBox.innerHTML = `
+      <div class="alert alert-info" style="margin-bottom:0;">
+        AI suggests: <strong>${label}</strong> (${pct}% confidence). This is a hint only - please confirm with your own judgement before rating.
+      </div>`;
+  } catch (err) {
+    resultBox.innerHTML = `<div class="alert alert-error" style="margin-bottom:0;">${err.message}</div>`;
+  }
+}
+
+async function loadTodayList() {
+  const body = document.getElementById("today-table-body");
+  try {
+    const res = await WasteSegAPI.get("/api/collector/today");
+    document.getElementById("col-progress-chip").textContent = `${res.rated_today} / ${res.total_assigned} rated today`;
+    if (!res.households.length) {
+      body.innerHTML = `<tr><td colspan="4" class="empty-state">No households assigned.</td></tr>`;
+      return;
+    }
+    body.innerHTML = res.households.map(h => `
+      <tr>
+        <td><strong>${h.household_code}</strong></td>
+        <td>${h.address || ""}</td>
+        <td>${ratingBadge(h.rating || "NOT_RATED")}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="setActiveTab('scan'); lookupHousehold('${h.household_code}')">${h.rating ? "Re-rate" : "Rate now"}</button></td>
+      </tr>`).join("");
+  } catch (err) {
+    body.innerHTML = `<tr><td colspan="4" class="empty-state">${err.message}</td></tr>`;
+  }
+}
+
+loadTodayList();
+</script>
+</body>
+</html>

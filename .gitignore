@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+backend/venv/
+
+# Database (auto-created and seeded on first run - don't commit local data)
+backend/waste_segregation.db
+backend/waste_segregation.db-journal
+
+# ML training dataset (large, downloadable again from Kaggle - don't commit)
+backend/ml_data/
+
+# Secrets
+.env
+backend/.env
+
+# OS/editor clutter
+.DS_Store
+.vscode/

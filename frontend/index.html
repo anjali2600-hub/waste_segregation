@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Waste Segregation - A behaviour-first bridge to waste segregation</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header class="topbar"><nav id="navbar"></nav></header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <span class="eyebrow">Raipur, Chhattisgarh - 4-ward pilot</span>
+      <h1>A behaviour-first bridge to waste segregation at the source.</h1>
+      <p class="lead">
+        Waste Segregation is a low-cost QR layer over your city's existing door-to-door
+        waste collection. No new bins, no new hardware - just a QR tag per
+        household, a collector app, and instant Green Credit rewards for
+        segregating correctly.
+      </p>
+      <div class="hero-cta">
+        <a href="/register.html" class="btn btn-primary btn-lg">Register your household</a>
+        <a href="/login.html" class="btn btn-outline btn-lg">Log in</a>
+      </div>
+      <div class="chip-row mt-3">
+        <span class="chip">Unique QR per household</span>
+        <span class="chip">5-second rating workflow</span>
+        <span class="chip">Green Credit rewards</span>
+        <span class="chip">Ward-wise ULB dashboard</span>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="flex-between mb-2">
+        <strong>Household H-10023</strong>
+        <span id="hero-badge" class="badge badge-good">Good</span>
+      </div>
+      <div class="card card-tight" style="background:var(--green-50); border:none;">
+        <div class="stat-label">Today's collection</div>
+        <div class="stat-value" style="font-size:1.5rem;">Segregated correctly</div>
+      </div>
+      <div class="grid grid-2 mt-2">
+        <div class="card card-tight">
+          <div class="stat-label">Green Credits earned</div>
+          <div class="stat-value">+10</div>
+        </div>
+        <div class="card card-tight">
+          <div class="stat-label">Current balance</div>
+          <div class="stat-value">120</div>
+        </div>
+      </div>
+      <p class="small muted mt-2 mb-0">Live snapshot from the demo dataset - try it below.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="what-is">
+  <div class="container">
+    <div class="section-title">
+      <h2>What is Waste Segregation?</h2>
+      <p>Most Tier-2/3 households already know segregation is mandatory. What's
+      missing is immediate feedback and a reason to keep doing it - even when
+      the collector quietly accepts mixed waste anyway. Waste Segregation closes that
+      gap digitally, without replacing a single bin or truck already in use.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how-it-works" style="background:var(--paper); border-top:1px solid var(--ink-100); border-bottom:1px solid var(--ink-100);">
+  <div class="container">
+    <div class="section-title">
+      <h2>How it works</h2>
+      <p>Six simple steps bridge the household and the ULB dashboard.</p>
+    </div>
+    <div class="grid grid-3">
+      <div class="card step-card"><div class="step-num">1</div><h4>Segregate</h4><p>Household separates wet and dry waste as usual.</p></div>
+      <div class="card step-card"><div class="step-num">2</div><h4>Scan</h4><p>Collector scans the household's unique QR tag at the door.</p></div>
+      <div class="card step-card"><div class="step-num">3</div><h4>Rate</h4><p>Collector rates today's segregation: Good, Average or Poor.</p></div>
+      <div class="card step-card"><div class="step-num">4</div><h4>Reward</h4><p>Green Credits are calculated and awarded automatically.</p></div>
+      <div class="card step-card"><div class="step-num">5</div><h4>Track</h4><p>Household views credits, history and redemption options.</p></div>
+      <div class="card step-card"><div class="step-num">6</div><h4>Analyze</h4><p>ULB dashboard receives live ward-wise compliance data.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="why-it-matters">
+  <div class="container">
+    <div class="section-title">
+      <h2>Why it matters</h2>
+      <p>Segregation compliance is invisible to city administrators today.
+      Waste Segregation turns every doorstep pickup into a data point - and every
+      good habit into a small, tangible reward.</p>
+    </div>
+    <div class="stat-strip">
+      <div class="card"><div class="stat-value">Rs.0</div><div class="stat-label">New hardware cost</div></div>
+      <div class="card"><div class="stat-value">~5s</div><div class="stat-label">Per-household rating time</div></div>
+      <div class="card"><div class="stat-value">4</div><div class="stat-label">Pilot wards in Raipur</div></div>
+      <div class="card"><div class="stat-value">100%</div><div class="stat-label">Existing infrastructure reused</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section text-center">
+  <div class="container">
+    <h2 style="color:var(--green-900);">Try the live demo</h2>
+    <p class="mb-2">Log in with a demo household, collector, or ULB admin account -
+    seeded data is ready immediately, no setup required.</p>
+    <a href="/login.html" class="btn btn-primary btn-lg">Explore the demo</a>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <span>(c) 2026 Waste Segregation - Prototype for SIH / YUVA Future. Raipur pilot dataset.</span>
+    <span><a href="/login.html">Log in</a> | <a href="/register.html">Register</a></span>
+  </div>
+</footer>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script>renderNavbar();</script>
+</body>
+</html>

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Household - Waste Segregation</title>
+<link rel="stylesheet" href="/css/style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<header class="topbar"><nav id="navbar"></nav></header>
+
+<main class="app-main">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <h1 id="hh-title">Household dashboard</h1>
+        <p class="muted" id="hh-address">Loading...</p>
+      </div>
+      <div class="chip-row">
+        <span class="chip" id="hh-code-chip">-</span>
+        <span class="chip" id="hh-ward-chip">-</span>
+      </div>
+    </div>
+
+    <div class="tabbar">
+      <button data-tab="dashboard" class="active">Dashboard</button>
+      <button data-tab="qr">My QR</button>
+      <button data-tab="credits">Credits</button>
+      <button data-tab="history">Collection history</button>
+      <button data-tab="rewards">Rewards</button>
+      <button data-tab="profile">Profile</button>
+    </div>
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="tab-panel active" id="tab-dashboard">
+      <div class="grid grid-4 mb-2">
+        <div class="card">
+          <div class="card-title">Today's collection</div>
+          <div id="dash-today"><span class="loading-spinner"></span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Green Credit balance</div>
+          <div class="stat-value" id="dash-balance">-</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Segregation rate (30d)</div>
+          <div class="stat-value" id="dash-rate">-</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Collections (30d)</div>
+          <div class="stat-value" id="dash-total30">-</div>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-title">Last 30 days - rating breakdown</div>
+          <div id="dash-breakdown" class="mt-2">Loading...</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Quick tip</div>
+          <p class="mt-1">Keep wet and dry waste in two separate bins before the
+          collector arrives. A consistent "Good" rating earns the most Green
+          Credits and unlocks better rewards, faster.</p>
+          <button class="btn btn-secondary btn-sm mt-1" onclick="setActiveTab('qr')">Show my QR code</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ QR ============ -->
+    <section class="tab-panel" id="tab-qr">
+      <div class="card qr-box" style="max-width:420px;margin:0 auto;">
+        <h3 class="mt-0">Your household QR</h3>
+        <p class="muted small text-center">Show this to your waste collector every day -
+        it identifies your household only, with no personal data encoded.</p>
+        <div id="qr-canvas-holder"></div>
+        <div class="qr-code-text" id="qr-payload-text">-</div>
+        <p class="small muted mt-2 text-center">Household ID: <strong id="qr-code-label">-</strong></p>
+      </div>
+    </section>
+
+    <!-- ============ CREDITS ============ -->
+    <section class="tab-panel" id="tab-credits">
+      <div class="grid grid-2 mb-2">
+        <div class="card">
+          <div class="card-title">Current balance</div>
+          <div class="stat-value" id="credits-balance">-</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Redeem</div>
+          <p class="mt-0 mb-1 small">Use your balance in the Rewards tab.</p>
+          <button class="btn btn-secondary btn-sm" onclick="setActiveTab('rewards')">Go to Rewards -></button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Transaction history</div>
+        <div class="table-wrap mt-1">
+          <table>
+            <thead><tr><th>Date</th><th>Type</th><th>Description</th><th style="text-align:right;">Amount</th></tr></thead>
+            <tbody id="credits-table-body"><tr><td colspan="4">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HISTORY ============ -->
+    <section class="tab-panel" id="tab-history">
+      <div class="card">
+        <div class="card-title">Segregation history</div>
+        <div class="table-wrap mt-1">
+          <table>
+            <thead><tr><th>Date</th><th>Rating</th><th>Credits</th><th>Collector</th></tr></thead>
+            <tbody id="history-table-body"><tr><td colspan="4">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ REWARDS ============ -->
+    <section class="tab-panel" id="tab-rewards">
+      <div class="alert alert-info">These are prototype/mock redemptions -
+      not yet connected to real property-tax, electricity-bill or shop-partner systems.</div>
+      <div class="grid grid-3" id="rewards-grid"><div class="card">Loading...</div></div>
+
+      <div class="card mt-3">
+        <div class="card-title">Redemption history</div>
+        <div class="table-wrap mt-1">
+          <table>
+            <thead><tr><th>Date</th><th>Reward</th><th>Credits used</th><th>Status</th></tr></thead>
+            <tbody id="redemptions-table-body"><tr><td colspan="4">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PROFILE ============ -->
+    <section class="tab-panel" id="tab-profile">
+      <div class="card" style="max-width:480px;">
+        <div class="card-title">Household profile</div>
+        <table class="mt-1">
+          <tbody id="profile-table"><tr><td colspan="2">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="modal-backdrop" id="redeem-modal">
+  <div class="modal">
+    <h3 class="mt-0">Confirm redemption</h3>
+    <p id="redeem-modal-text"></p>
+    <div class="flex flex-gap mt-2">
+      <button class="btn btn-outline btn-block" onclick="closeRedeemModal()">Cancel</button>
+      <button class="btn btn-primary btn-block" id="redeem-confirm-btn">Redeem</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script>
+if (!WasteSegAuth.guard(["HOUSEHOLD"])) { throw new Error("redirect"); }
+renderNavbar();
+initTabs("dashboard");
+
+const code = WasteSegAuth.householdCode();
+if (!code) {
+  toast("No household profile found for this account.", "error");
+}
+
+let pendingRewardId = null;
+
+async function loadDashboard() {
+  const [summaryProfile, summary30] = await Promise.all([
+    WasteSegAPI.get(`/api/households/${code}`),
+    WasteSegAPI.get(`/api/households/${code}/summary`),
+  ]);
+
+  document.getElementById("hh-title").textContent = `Welcome, ${WasteSegAuth.user().name || "Household"}`;
+  document.getElementById("hh-address").textContent = summaryProfile.address || "";
+  document.getElementById("hh-code-chip").textContent = summaryProfile.household_code;
+  document.getElementById("hh-ward-chip").textContent = summaryProfile.ward || "Ward -";
+
+  document.getElementById("dash-today").innerHTML = ratingBadge(summaryProfile.today_status);
+  document.getElementById("dash-balance").textContent = summaryProfile.credit_balance;
+  document.getElementById("dash-rate").textContent = summary30.segregation_rate_30d + "%";
+  document.getElementById("dash-total30").textContent = summary30.total_collections_30d;
+
+  const b = summary30.last_30_days;
+  const total = Math.max(1, b.GOOD + b.AVERAGE + b.POOR);
+  document.getElementById("dash-breakdown").innerHTML = `
+    ${breakdownBar("Good", b.GOOD, total, "var(--green-600)")}
+    ${breakdownBar("Average", b.AVERAGE, total, "var(--amber-500)")}
+    ${breakdownBar("Poor", b.POOR, total, "var(--red-500)")}
+  `;
+
+  document.getElementById("profile-table").innerHTML = `
+    <tr><td class="muted">Household ID</td><td><strong>${summaryProfile.household_code}</strong></td></tr>
+    <tr><td class="muted">Name</td><td>${WasteSegAuth.user().name || "-"}</td></tr>
+    <tr><td class="muted">Contact</td><td>${WasteSegAuth.user().contact || "-"}</td></tr>
+    <tr><td class="muted">Address</td><td>${summaryProfile.address || "-"}</td></tr>
+    <tr><td class="muted">Ward</td><td>${summaryProfile.ward || "-"}</td></tr>
+    <tr><td class="muted">City / District</td><td>${summaryProfile.city || summaryProfile.district || "-"}</td></tr>
+    <tr><td class="muted">Member since</td><td>${fmtDateTime(summaryProfile.member_since)}</td></tr>
+  `;
+}
+
+function breakdownBar(label, value, total, color) {
+  const pct = Math.round((value / total) * 100);
+  return `
+    <div class="mt-1">
+      <div class="flex-between small"><span>${label}</span><span class="muted">${value} (${pct}%)</span></div>
+      <div class="progress-bar"><div style="width:${pct}%; background:${color};"></div></div>
+    </div>`;
+}
+
+async function loadQR() {
+  const res = await WasteSegAPI.get(`/api/households/${code}/qr`);
+  document.getElementById("qr-payload-text").textContent = res.qr_payload;
+  document.getElementById("qr-code-label").textContent = res.household_code;
+  const holder = document.getElementById("qr-canvas-holder");
+  holder.innerHTML = "";
+  new QRCode(holder, { text: res.qr_payload, width: 220, height: 220, colorDark: "#0f5132", colorLight: "#ffffff" });
+}
+
+async function loadCredits() {
+  const res = await WasteSegAPI.get(`/api/households/${code}/credits`);
+  document.getElementById("credits-balance").textContent = res.balance;
+  const body = document.getElementById("credits-table-body");
+  if (!res.transactions.length) {
+    body.innerHTML = `<tr><td colspan="4" class="empty-state">No transactions yet.</td></tr>`;
+    return;
+  }
+  body.innerHTML = res.transactions.map(t => `
+    <tr>
+      <td>${fmtDateTime(t.timestamp)}</td>
+      <td><span class="badge ${t.transaction_type === 'EARNED' ? 'badge-good' : t.transaction_type === 'REDEEMED' ? 'badge-poor' : 'badge-neutral'}">${t.transaction_type}</span></td>
+      <td>${t.description || ""}</td>
+      <td style="text-align:right; font-weight:700; color:${t.amount >= 0 ? 'var(--green-700)' : 'var(--red-500)'}">${t.amount >= 0 ? "+" : ""}${t.amount}</td>
+    </tr>`).join("");
+}
+
+async function loadHistory() {
+  const res = await WasteSegAPI.get(`/api/households/${code}/history`);
+  const body = document.getElementById("history-table-body");
+  if (!res.history.length) {
+    body.innerHTML = `<tr><td colspan="4" class="empty-state">No collections recorded yet.</td></tr>`;
+    return;
+  }
+  body.innerHTML = res.history.map(h => `
+    <tr>
+      <td>${fmtDate(h.collection_date)}</td>
+      <td>${ratingBadge(h.rating)}</td>
+      <td>${h.credits_awarded >= 0 ? "+" : ""}${h.credits_awarded}</td>
+      <td>${h.collector_name} (${h.collector_code})</td>
+    </tr>`).join("");
+}
+
+async function loadRewards() {
+  const [rewardsRes, redemptionsRes, hh] = await Promise.all([
+    WasteSegAPI.get("/api/rewards"),
+    WasteSegAPI.get(`/api/households/${code}/redemptions`),
+    WasteSegAPI.get(`/api/households/${code}`),
+  ]);
+  const balance = hh.credit_balance;
+  const grid = document.getElementById("rewards-grid");
+  grid.innerHTML = rewardsRes.rewards.map(r => {
+    const canAfford = balance >= r.credits_required;
+    return `
+      <div class="card">
+        <div class="card-title">${r.credits_required} credits</div>
+        <h4 class="mt-0">${r.name}</h4>
+        <p class="small">${r.description || ""}</p>
+        <button class="btn ${canAfford ? 'btn-primary' : 'btn-outline'} btn-block btn-sm"
+          ${canAfford ? "" : "disabled"} onclick="openRedeemModal(${r.id}, '${r.name.replace(/'/g, "\\'")}', ${r.credits_required})">
+          ${canAfford ? "Redeem" : "Not enough credits"}
+        </button>
+      </div>`;
+  }).join("");
+
+  const rbody = document.getElementById("redemptions-table-body");
+  if (!redemptionsRes.redemptions.length) {
+    rbody.innerHTML = `<tr><td colspan="4" class="empty-state">No redemptions yet.</td></tr>`;
+  } else {
+    rbody.innerHTML = redemptionsRes.redemptions.map(r => `
+      <tr>
+        <td>${fmtDateTime(r.redemption_date)}</td>
+        <td>${r.reward_name}</td>
+        <td>-${r.credits_used}</td>
+        <td><span class="badge badge-good">${r.status}</span></td>
+      </tr>`).join("");
+  }
+}
+
+function openRedeemModal(id, name, credits) {
+  pendingRewardId = id;
+  document.getElementById("redeem-modal-text").innerHTML = `Redeem <strong>${credits} Green Credits</strong> for <strong>${name}</strong>? This is a prototype mock fulfilment.`;
+  document.getElementById("redeem-modal").classList.add("open");
+}
+function closeRedeemModal() {
+  document.getElementById("redeem-modal").classList.remove("open");
+  pendingRewardId = null;
+}
+document.getElementById("redeem-confirm-btn").addEventListener("click", async () => {
+  if (!pendingRewardId) return;
+  const btn = document.getElementById("redeem-confirm-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spinner"></span> Redeeming...';
+  try {
+    const res = await WasteSegAPI.post("/api/rewards/redeem", { reward_id: pendingRewardId });
+    toast(`Redeemed! New balance: ${res.new_balance} credits.`, "success");
+    closeRedeemModal();
+    await Promise.all([loadRewards(), loadDashboard()]);
+  } catch (err) {
+    toast(err.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "Redeem";
+  }
+});
+
+(async () => {
+  try {
+    await Promise.all([loadDashboard(), loadQR(), loadCredits(), loadHistory(), loadRewards()]);
+  } catch (err) {
+    toast(err.message, "error");
+  }
+})();
+</script>
+</body>
+</html>
